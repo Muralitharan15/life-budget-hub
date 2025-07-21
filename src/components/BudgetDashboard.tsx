@@ -890,8 +890,9 @@ const BudgetDashboard = () => {
         title: "All Data Cleared",
         description: "All your budget data has been permanently deleted. You can start fresh now!",
       });
-    } catch (error) {
-      console.error("Error clearing all data:", error);
+        } catch (error) {
+      console.error("Error clearing all data:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
       toast({
         title: "Clear Data Failed",
         description: "Failed to clear all data. Please try again.",
