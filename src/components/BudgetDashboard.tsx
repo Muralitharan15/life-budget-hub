@@ -264,9 +264,10 @@ const BudgetDashboard = () => {
         saveBudgetConfig,
     saveInvestmentPortfolio,
     addTransaction,
-    deleteBudgetConfig,
+        deleteBudgetConfig,
     deleteAllInvestmentPortfolios,
     deleteAllTransactions,
+    deleteAllUserData,
     refetch,
                         } = useBudgetData(selectedMonth + 1, selectedYear, currentUser === "combined" ? "murali" : currentUser);
 
