@@ -995,8 +995,8 @@ export function useBudgetData(month: number, year: number, profileName: string) 
             if (error) throw error;
       setTransactions(prev => [data, ...prev]);
       return data;
-    } catch (err) {
-      console.error('addTransaction error details:', {
+        } catch (err) {
+      const errorDetails = {
         errorId: 'ADD_TRANSACTION_007',
         source: 'useBudgetData.ts',
         timestamp: new Date().toISOString(),
@@ -1004,14 +1004,19 @@ export function useBudgetData(month: number, year: number, profileName: string) 
         code: err?.code || 'No code available',
         details: err?.details || 'No details available',
         hint: err?.hint || 'No hint available',
-        rawError: err,
         user: user.id,
         profileName,
         validMonth,
         validYear,
         budgetPeriodId,
-        transactionData: JSON.stringify(transaction, null, 2)
-      });
+        transactionData: JSON.stringify(transaction, null, 2),
+        errorString: String(err),
+        errorJson: JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
+      };
+
+      console.error('addTransaction error details:', errorDetails);
+      console.error('Raw error object:', err);
+
       throw err;
     }
   };
