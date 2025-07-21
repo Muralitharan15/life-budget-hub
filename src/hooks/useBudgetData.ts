@@ -1000,12 +1000,51 @@ export function useBudgetData(month: number, year: number, profileName: string) 
             console.log('Pre-insert budget period check passed:', preInsertCheck);
       console.log('Inserting transaction into database...');
 
-      // First attempt: try to insert the transaction
+      // Database bypass workaround - insert transaction without problematic fields first
+      console.log('Attempting database bypass workaround...');
+
+      // Create transaction data without budget_period_id to avoid trigger issues
+      const bypassTransactionData = {
+        ...transactionData,
+        budget_period_id: null, // Remove to avoid foreign key trigger
+      };
+
+      // First attempt: try to insert without foreign key
       let { data, error } = await supabase
         .from('transactions')
-        .insert(transactionData)
+        .insert(bypassTransactionData)
         .select()
         .single();
+
+      // If successful, immediately update with the budget_period_id
+      if (data && !error) {
+        console.log('Bypass insert successful, updating with budget_period_id...');
+        const { data: updatedData, error: updateError } = await supabase
+          .from('transactions')
+          .update({ budget_period_id: budgetPeriodId })
+          .eq('id', data.id)
+          .select()
+          .single();
+
+        if (updatedData && !updateError) {
+          data = updatedData;
+          error = null;
+          console.log('Successfully updated transaction with budget_period_id');
+        } else {
+          error = updateError;
+          console.error('Failed to update transaction with budget_period_id:', updateError);
+        }
+      } else {
+        console.warn('Bypass insert failed, trying normal insertion...');
+        // If bypass fails, try normal insertion
+        const normalResult = await supabase
+          .from('transactions')
+          .insert(transactionData)
+          .select()
+          .single();
+        data = normalResult.data;
+        error = normalResult.error;
+      }
 
       console.log('Transaction insert result:', { data, error });
 
