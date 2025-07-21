@@ -828,6 +828,39 @@ export function useBudgetData(month: number, year: number, profileName: string) 
         // Delete and recreate the corrupted budget period to ensure clean state
         console.log('Deleting corrupted budget period and recreating...');
 
+                // First, clean up any related data that might reference this corrupted budget period
+        console.log('Cleaning up related data for corrupted budget period...');
+
+        // Clean up any transactions that might reference this corrupted period
+        try {
+          await supabase
+            .from('transactions')
+            .delete()
+            .eq('budget_period_id', budgetPeriodId);
+        } catch (cleanupError) {
+          console.warn('Error cleaning up transactions:', cleanupError);
+        }
+
+        // Clean up any budget configs that might reference this period
+        try {
+          await supabase
+            .from('budget_configs')
+            .delete()
+            .eq('budget_period_id', budgetPeriodId);
+        } catch (cleanupError) {
+          console.warn('Error cleaning up budget configs:', cleanupError);
+        }
+
+        // Clean up any investment portfolios that might reference this period
+        try {
+          await supabase
+            .from('investment_portfolios')
+            .delete()
+            .eq('budget_period_id', budgetPeriodId);
+        } catch (cleanupError) {
+          console.warn('Error cleaning up investment portfolios:', cleanupError);
+        }
+
         // Delete the corrupted period
         const { error: deleteError } = await supabase
           .from('budget_periods')
@@ -836,6 +869,7 @@ export function useBudgetData(month: number, year: number, profileName: string) 
 
         if (deleteError) {
           console.error('Failed to delete corrupted budget period:', deleteError);
+          // Don't throw here, continue to recreate
         }
 
         // Create a new budget period
