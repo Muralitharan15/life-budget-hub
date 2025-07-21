@@ -606,13 +606,24 @@ export function useBudgetData(month: number, year: number, profileName: string) 
             try {
       // First, ensure we have a budget period
 
-      console.log('Looking for budget period:', {
+            console.log('Looking for budget period:', {
         user_id: user.id,
         budget_month: validMonth,
         budget_year: validYear,
         original_month: month,
-        original_year: year
+        original_year: year,
+        validMonth_type: typeof validMonth,
+        validYear_type: typeof validYear,
+        validMonth_value: validMonth,
+        validYear_value: validYear
       });
+
+      // Additional validation before database operations
+      if (!user.id || !validMonth || !validYear ||
+          typeof validMonth !== 'number' || typeof validYear !== 'number' ||
+          validMonth < 1 || validMonth > 12 || validYear < 2020 || validYear > 2050) {
+        throw new Error(`Invalid parameters for budget period: user_id=${user.id}, month=${validMonth}, year=${validYear}`);
+      }
 
       const { data: existingPeriod, error: periodError } = await supabase
         .from('budget_periods')
