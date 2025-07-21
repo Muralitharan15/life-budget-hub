@@ -264,9 +264,10 @@ const BudgetDashboard = () => {
         saveBudgetConfig,
     saveInvestmentPortfolio,
     addTransaction,
-    deleteBudgetConfig,
+        deleteBudgetConfig,
     deleteAllInvestmentPortfolios,
     deleteAllTransactions,
+    deleteAllUserData,
     refetch,
                         } = useBudgetData(selectedMonth + 1, selectedYear, currentUser === "combined" ? "murali" : currentUser);
 
@@ -804,8 +805,9 @@ const BudgetDashboard = () => {
         title: "Budget Configuration Deleted",
         description: "Budget configuration has been deleted successfully.",
       });
-    } catch (error) {
-      console.error("Error deleting budget config:", error);
+        } catch (error) {
+      console.error("Error deleting budget config:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
       toast({
         title: "Delete Failed",
         description: "Failed to delete budget configuration. Please try again.",
@@ -832,8 +834,9 @@ const BudgetDashboard = () => {
         title: "Investment Portfolios Deleted",
         description: "All investment portfolios have been deleted successfully.",
       });
-    } catch (error) {
-      console.error("Error deleting investment portfolios:", error);
+        } catch (error) {
+      console.error("Error deleting investment portfolios:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
       toast({
         title: "Delete Failed",
         description: "Failed to delete investment portfolios. Please try again.",
@@ -860,11 +863,39 @@ const BudgetDashboard = () => {
         title: "All Transactions Deleted",
         description: "All transactions have been deleted successfully.",
       });
-    } catch (error) {
-      console.error("Error deleting transactions:", error);
+        } catch (error) {
+      console.error("Error deleting transactions:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
       toast({
         title: "Delete Failed",
         description: "Failed to delete transactions. Please try again.",
+        variant: "destructive",
+      });
+    }
+    };
+
+  const handleClearAllData = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to clear data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await deleteAllUserData();
+      toast({
+        title: "All Data Cleared",
+        description: "All your budget data has been permanently deleted. You can start fresh now!",
+      });
+        } catch (error) {
+      console.error("Error clearing all data:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
+      toast({
+        title: "Clear Data Failed",
+        description: "Failed to clear all data. Please try again.",
         variant: "destructive",
       });
     }
@@ -1426,8 +1457,8 @@ const BudgetDashboard = () => {
         title: "Expense Added",
         description: `Added ��${amount} for ${spentFor}`,
       });
-        } catch (error) {
-      console.error("Error adding expense:", {
+                } catch (error) {
+      const errorDetails = {
         errorId: 'ADD_EXPENSE_005',
         source: 'BudgetDashboard.tsx',
         timestamp: new Date().toISOString(),
@@ -1435,9 +1466,13 @@ const BudgetDashboard = () => {
         code: error?.code || 'No code available',
         details: error?.details || 'No details available',
         hint: error?.hint || 'No hint available',
-        rawError: error,
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        stack: error instanceof Error ? error.stack : undefined,
+        errorString: String(error),
+        errorJson: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+      };
+
+      console.error("Error adding expense:", errorDetails);
+      console.error("Raw error object:", error);
             // Extract meaningful error message
       let errorMessage = "There was an error adding your expense. Please try again.";
 
