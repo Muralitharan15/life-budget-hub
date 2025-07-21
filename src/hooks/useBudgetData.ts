@@ -1214,6 +1214,94 @@ export function useBudgetData(month: number, year: number, profileName: string) 
     deleteBudgetConfig,
     deleteAllInvestmentPortfolios,
     deleteAllTransactions,
-    refetch: fetchBudgetData
+        refetch: fetchBudgetData,
+    deleteAllUserData: async () => {
+      if (!user) {
+        throw new Error("User authentication required");
+      }
+
+      try {
+        console.log('Starting complete data cleanup for user:', user.id);
+
+        // Delete in order to avoid foreign key constraint issues
+
+        // 1. Delete transaction history
+        console.log('Deleting transaction history...');
+        await supabase
+          .from('transaction_history')
+          .delete()
+          .eq('user_id', user.id);
+
+        // 2. Delete transactions
+        console.log('Deleting transactions...');
+        await supabase
+          .from('transactions')
+          .delete()
+          .eq('user_id', user.id);
+
+        // 3. Delete investment funds
+        console.log('Deleting investment funds...');
+        await supabase
+          .from('investment_funds')
+          .delete()
+          .eq('user_id', user.id);
+
+        // 4. Delete investment categories
+        console.log('Deleting investment categories...');
+        await supabase
+          .from('investment_categories')
+          .delete()
+          .eq('user_id', user.id);
+
+        // 5. Delete investment portfolios
+        console.log('Deleting investment portfolios...');
+        await supabase
+          .from('investment_portfolios')
+          .delete()
+          .eq('user_id', user.id);
+
+        // 6. Delete budget configs
+        console.log('Deleting budget configs...');
+        await supabase
+          .from('budget_configs')
+          .delete()
+          .eq('user_id', user.id);
+
+        // 7. Delete budget periods (this should be last)
+        console.log('Deleting budget periods...');
+        await supabase
+          .from('budget_periods')
+          .delete()
+          .eq('user_id', user.id);
+
+        // 8. Delete monthly summaries if they exist
+        try {
+          console.log('Deleting monthly summaries...');
+          await supabase
+            .from('monthly_summaries')
+            .delete()
+            .eq('user_id', user.id);
+        } catch (error) {
+          console.warn('Monthly summaries table might not exist:', error);
+        }
+
+        console.log('Complete data cleanup finished successfully');
+
+        // Reset local state
+        setBudgetConfig(null);
+        setPortfolios([]);
+        setCategories([]);
+        setFunds([]);
+        setTransactions([]);
+
+        // Refresh data
+        await fetchBudgetData();
+
+        return { success: true };
+      } catch (error) {
+        console.error('Error during complete data cleanup:', error);
+        throw error;
+      }
+    }
   };
 }
