@@ -437,13 +437,65 @@ export function useBudgetData(month: number, year: number, profileName: string) 
     if (!user || !profileName) return;
 
     try {
-      console.log('Saving budget config:', { user: user.id, profileName, month, year, config });
+            console.log('Saving budget config:', { user: user.id, profileName, month, year, config });
+
+      // First, ensure we have a budget period
+      const currentDate = new Date();
+      const validMonth = month && month >= 1 && month <= 12 ? month : currentDate.getMonth() + 1;
+      const validYear = year && year >= 2020 ? year : currentDate.getFullYear();
+
+      let budgetPeriodId = null;
+
+      // Find or create budget period
+      const { data: existingPeriod, error: periodError } = await supabase
+        .from('budget_periods')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('budget_month', validMonth)
+        .eq('budget_year', validYear)
+        .maybeSingle();
+
+      if (periodError && periodError.code !== 'PGRST116') {
+        console.error('Error finding budget period for config:', periodError);
+        throw new Error(`Failed to find budget period: ${periodError.message}`);
+      }
+
+      if (existingPeriod) {
+        budgetPeriodId = existingPeriod.id;
+        console.log('Found existing budget period for config:', budgetPeriodId);
+      } else {
+        // Create new budget period
+        console.log('Creating new budget period for config...');
+        const { data: newPeriod, error: createError } = await supabase
+          .from('budget_periods')
+          .insert({
+            user_id: user.id,
+            budget_month: validMonth,
+            budget_year: validYear,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating budget period for config:', createError);
+          throw new Error(`Failed to create budget period: ${createError.message}`);
+        }
+
+        if (newPeriod) {
+          budgetPeriodId = newPeriod.id;
+          console.log('Created new budget period for config:', budgetPeriodId);
+        } else {
+          throw new Error("Budget period creation returned no data");
+        }
+      }
       
-            const budgetData = {
+                        const budgetData = {
         user_id: user.id,
         profile_name: profileName,
-                budget_month: month,
-        budget_year: year,
+        budget_period_id: budgetPeriodId,
+                budget_month: validMonth,
+        budget_year: validYear,
         monthly_salary: config.monthly_salary || 0,
         budget_percentage: config.budget_percentage || 100,
         allocation_need: config.allocation_need || 0,
