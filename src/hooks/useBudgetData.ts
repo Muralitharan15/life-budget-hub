@@ -811,30 +811,60 @@ export function useBudgetData(month: number, year: number, profileName: string) 
 
       console.log('Budget period verified:', periodCheck);
 
-      // Check if the budget period has null budget_year or budget_month (corrupted data)
-      if (!periodCheck.budget_year || !periodCheck.budget_month) {
-        console.warn('Found corrupted budget period with null year/month, fixing it:', periodCheck);
+            // Check if the budget period has null budget_year or budget_month (corrupted data)
+      // Also handle cases where values might be undefined, 0, or other falsy values
+      const hasValidYear = periodCheck.budget_year && typeof periodCheck.budget_year === 'number' && periodCheck.budget_year > 2000;
+      const hasValidMonth = periodCheck.budget_month && typeof periodCheck.budget_month === 'number' && periodCheck.budget_month >= 1 && periodCheck.budget_month <= 12;
 
-        // Fix the corrupted budget period
-        const { error: updateError } = await supabase
+      if (!hasValidYear || !hasValidMonth) {
+        console.warn('Found corrupted budget period with invalid year/month, fixing it:', {
+          id: budgetPeriodId,
+          current_year: periodCheck.budget_year,
+          current_month: periodCheck.budget_month,
+          expected_year: validYear,
+          expected_month: validMonth
+        });
+
+        // Delete and recreate the corrupted budget period to ensure clean state
+        console.log('Deleting corrupted budget period and recreating...');
+
+        // Delete the corrupted period
+        const { error: deleteError } = await supabase
           .from('budget_periods')
-          .update({
-            budget_year: validYear,
-            budget_month: validMonth,
-            is_active: true
-          })
+          .delete()
           .eq('id', budgetPeriodId);
 
-        if (updateError) {
-          console.error('Failed to fix corrupted budget period:', updateError);
-          throw new Error(`Failed to fix corrupted budget period: ${updateError.message}`);
+        if (deleteError) {
+          console.error('Failed to delete corrupted budget period:', deleteError);
         }
 
-        console.log('Successfully fixed corrupted budget period');
+        // Create a new budget period
+        const { data: newPeriod, error: createError } = await supabase
+          .from('budget_periods')
+          .insert({
+            user_id: user.id,
+            budget_month: validMonth,
+            budget_year: validYear,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Failed to recreate budget period:', createError);
+          throw new Error(`Failed to recreate budget period: ${createError.message}`);
+        }
+
+        if (newPeriod) {
+          budgetPeriodId = newPeriod.id;
+          console.log('Successfully recreated budget period with new ID:', budgetPeriodId);
+        } else {
+          throw new Error("Budget period recreation returned no data");
+        }
       } else {
         // Validate that the existing budget period matches our expected month/year
         if (periodCheck.budget_year !== validYear || periodCheck.budget_month !== validMonth) {
-          console.warn('Budget period year/month mismatch:', {
+          console.warn('Budget period year/month mismatch, updating:', {
             expected: { month: validMonth, year: validYear },
             found: { month: periodCheck.budget_month, year: periodCheck.budget_year }
           });
@@ -856,6 +886,19 @@ export function useBudgetData(month: number, year: number, profileName: string) 
           console.log('Updated budget period month/year to match transaction');
         }
       }
+
+      // Final verification that the budget period is now valid
+      const { data: finalCheck, error: finalError } = await supabase
+        .from('budget_periods')
+        .select('id, budget_year, budget_month')
+        .eq('id', budgetPeriodId)
+        .single();
+
+      if (finalError || !finalCheck || !finalCheck.budget_year || !finalCheck.budget_month) {
+        throw new Error(`Budget period validation failed after repair: ${JSON.stringify(finalCheck)}`);
+      }
+
+      console.log('Budget period final verification passed:', finalCheck);
 
                         const transactionData = {
                 ...transaction,
