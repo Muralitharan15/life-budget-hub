@@ -869,6 +869,32 @@ const BudgetDashboard = () => {
         variant: "destructive",
       });
     }
+    };
+
+  const handleClearAllData = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to clear data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await deleteAllUserData();
+      toast({
+        title: "All Data Cleared",
+        description: "All your budget data has been permanently deleted. You can start fresh now!",
+      });
+    } catch (error) {
+      console.error("Error clearing all data:", error);
+      toast({
+        title: "Clear Data Failed",
+        description: "Failed to clear all data. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSalaryUpdate = async (
