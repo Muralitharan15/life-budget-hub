@@ -981,16 +981,67 @@ export function useBudgetData(month: number, year: number, profileName: string) 
         throw new Error(`Budget period still has null values: ${JSON.stringify(preInsertCheck)}`);
       }
 
-      console.log('Pre-insert budget period check passed:', preInsertCheck);
+            console.log('Pre-insert budget period check passed:', preInsertCheck);
       console.log('Inserting transaction into database...');
 
-      const { data, error } = await supabase
+      // First attempt: try to insert the transaction
+      let { data, error } = await supabase
         .from('transactions')
         .insert(transactionData)
         .select()
         .single();
 
       console.log('Transaction insert result:', { data, error });
+
+      // If we get a budget_periods constraint error, try to fix it and retry
+      if (error && error.code === '23502' && error.message.includes('budget_periods')) {
+        console.warn('Database trigger/constraint issue detected, attempting recovery...');
+
+        // Delete and recreate the budget period to ensure clean state
+        console.log('Deleting and recreating budget period due to constraint issue...');
+
+        // Delete the problematic budget period
+        await supabase
+          .from('budget_periods')
+          .delete()
+          .eq('id', budgetPeriodId);
+
+        // Create a completely fresh budget period
+        const { data: newPeriod, error: createError } = await supabase
+          .from('budget_periods')
+          .insert({
+            user_id: user.id,
+            budget_month: validMonth,
+            budget_year: validYear,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (createError || !newPeriod) {
+          throw new Error(`Failed to recreate budget period: ${createError?.message}`);
+        }
+
+        // Update transaction data with new budget period ID
+        const updatedTransactionData = {
+          ...transactionData,
+          budget_period_id: newPeriod.id
+        };
+
+        console.log('Retrying transaction insert with new budget period:', newPeriod.id);
+
+        // Retry the transaction insert
+        const retryResult = await supabase
+          .from('transactions')
+          .insert(updatedTransactionData)
+          .select()
+          .single();
+
+        data = retryResult.data;
+        error = retryResult.error;
+
+        console.log('Retry transaction insert result:', { data, error });
+      }
 
             if (error) throw error;
       setTransactions(prev => [data, ...prev]);
