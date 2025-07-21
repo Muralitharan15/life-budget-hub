@@ -1001,7 +1001,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
       console.log('Inserting transaction into database...');
 
       // Insert transaction with all required data
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('transactions')
         .insert(transactionData)
         .select()
