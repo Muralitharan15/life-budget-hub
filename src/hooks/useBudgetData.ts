@@ -753,7 +753,7 @@ export function useBudgetData(month: number, year: number, profileName: string) 
         }
       }
 
-            const transactionData = {
+                        const transactionData = {
                 ...transaction,
         user_id: user.id,
         profile_name: profileName,
@@ -765,11 +765,25 @@ export function useBudgetData(month: number, year: number, profileName: string) 
 
       console.log('Transaction data to insert:', transactionData);
 
+      // Final validation before insert
+      if (!transactionData.user_id || !transactionData.budget_period_id ||
+          !transactionData.budget_month || !transactionData.budget_year) {
+        throw new Error(`Invalid transaction data: ${JSON.stringify({
+          user_id: transactionData.user_id,
+          budget_period_id: transactionData.budget_period_id,
+          budget_month: transactionData.budget_month,
+          budget_year: transactionData.budget_year
+        })}`);
+      }
+
+      console.log('Inserting transaction into database...');
       const { data, error } = await supabase
         .from('transactions')
         .insert(transactionData)
         .select()
         .single();
+
+      console.log('Transaction insert result:', { data, error });
 
             if (error) throw error;
       setTransactions(prev => [data, ...prev]);
