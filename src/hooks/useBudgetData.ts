@@ -693,10 +693,10 @@ export function useBudgetData(month: number, year: number, profileName: string) 
         throw new Error("Failed to create or find budget period - cannot insert transaction");
       }
 
-      // Verify the budget period actually exists
+            // Verify the budget period actually exists and has valid data
       const { data: periodCheck, error: checkError } = await supabase
         .from('budget_periods')
-        .select('id, budget_year, budget_month')
+        .select('id, budget_year, budget_month, user_id, is_active')
         .eq('id', budgetPeriodId)
         .single();
 
@@ -706,6 +706,52 @@ export function useBudgetData(month: number, year: number, profileName: string) 
       }
 
       console.log('Budget period verified:', periodCheck);
+
+      // Check if the budget period has null budget_year or budget_month (corrupted data)
+      if (!periodCheck.budget_year || !periodCheck.budget_month) {
+        console.warn('Found corrupted budget period with null year/month, fixing it:', periodCheck);
+
+        // Fix the corrupted budget period
+        const { error: updateError } = await supabase
+          .from('budget_periods')
+          .update({
+            budget_year: validYear,
+            budget_month: validMonth,
+            is_active: true
+          })
+          .eq('id', budgetPeriodId);
+
+        if (updateError) {
+          console.error('Failed to fix corrupted budget period:', updateError);
+          throw new Error(`Failed to fix corrupted budget period: ${updateError.message}`);
+        }
+
+        console.log('Successfully fixed corrupted budget period');
+      } else {
+        // Validate that the existing budget period matches our expected month/year
+        if (periodCheck.budget_year !== validYear || periodCheck.budget_month !== validMonth) {
+          console.warn('Budget period year/month mismatch:', {
+            expected: { month: validMonth, year: validYear },
+            found: { month: periodCheck.budget_month, year: periodCheck.budget_year }
+          });
+
+          // Update the budget period to match our expected values
+          const { error: updateError } = await supabase
+            .from('budget_periods')
+            .update({
+              budget_year: validYear,
+              budget_month: validMonth
+            })
+            .eq('id', budgetPeriodId);
+
+          if (updateError) {
+            console.error('Failed to update budget period month/year:', updateError);
+            throw new Error(`Failed to update budget period: ${updateError.message}`);
+          }
+
+          console.log('Updated budget period month/year to match transaction');
+        }
+      }
 
             const transactionData = {
                 ...transaction,
