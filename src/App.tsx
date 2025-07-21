@@ -6,8 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthWrapper } from "@/components/AuthWrapper";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-// Import the clear data utility to make it available globally
+// Import utilities to make them available globally
 import "./utils/clearData";
+import "./utils/emergencyTransaction";
 
 const queryClient = new QueryClient();
 
