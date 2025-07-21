@@ -553,22 +553,7 @@ export function useBudgetData(month: number, year: number, profileName: string) 
       const addTransaction = async (transaction: Partial<Transaction>) => {
     if (!user || !profileName) return;
 
-    // Validate month and year values
-    if (!month || !year || month < 1 || month > 12 || year < 2020 || year > 3000) {
-      const error = new Error(`Invalid month/year values: month=${month}, year=${year}`);
-      console.error('addTransaction validation failed:', {
-        errorId: 'INVALID_MONTH_YEAR_006',
-        source: 'useBudgetData.ts',
-        timestamp: new Date().toISOString(),
-        month,
-        year,
-        profileName,
-        user: user.id
-      });
-      throw error;
-    }
-
-    console.log('addTransaction called with:', {
+        console.log('addTransaction called with:', {
       month,
       year,
       profileName,
@@ -576,10 +561,44 @@ export function useBudgetData(month: number, year: number, profileName: string) 
       transaction: transaction
         });
 
-        // Ensure we have valid month and year values, with fallbacks
+        // Ensure we have valid month and year values, with proper validation and fallbacks
     const currentDate = new Date();
-    const validMonth = month && month >= 1 && month <= 12 ? month : currentDate.getMonth() + 1;
-    const validYear = year && year >= 2020 ? year : currentDate.getFullYear();
+
+    let validMonth: number;
+    let validYear: number;
+
+    // More robust validation and fallback for month
+    if (month && typeof month === 'number' && month >= 1 && month <= 12) {
+      validMonth = month;
+    } else {
+      validMonth = currentDate.getMonth() + 1;
+      console.warn('Invalid or missing month, using current month:', { originalMonth: month, validMonth });
+    }
+
+    // More robust validation and fallback for year
+    if (year && typeof year === 'number' && year >= 2020 && year <= 2050) {
+      validYear = year;
+    } else {
+      validYear = currentDate.getFullYear();
+      console.warn('Invalid or missing year, using current year:', { originalYear: year, validYear });
+    }
+
+    // Final validation to ensure we have non-null values
+    if (!validMonth || !validYear || typeof validMonth !== 'number' || typeof validYear !== 'number') {
+      const error = new Error(`Failed to determine valid month/year: validMonth=${validMonth}, validYear=${validYear}`);
+      console.error('addTransaction final validation failed:', {
+        errorId: 'INVALID_MONTH_YEAR_006',
+        source: 'useBudgetData.ts',
+        timestamp: new Date().toISOString(),
+        originalMonth: month,
+        originalYear: year,
+        validMonth,
+        validYear,
+        profileName,
+        user: user.id
+      });
+      throw error;
+    }
 
     // Initialize budget period ID
     let budgetPeriodId = null;
