@@ -641,22 +641,42 @@ export function useBudgetData(month: number, year: number, profileName: string) 
       if (existingPeriod) {
         budgetPeriodId = existingPeriod.id;
         console.log('Found existing budget period:', budgetPeriodId);
-      } else {
+            } else {
         // Create new budget period
-        console.log('Creating new budget period...');
+        const budgetPeriodData = {
+          user_id: user.id,
+          budget_month: validMonth,
+          budget_year: validYear,
+          is_active: true,
+        };
+
+        console.log('Creating new budget period with data:', budgetPeriodData);
+
+        // Final validation before insert
+        if (!budgetPeriodData.user_id || !budgetPeriodData.budget_month || !budgetPeriodData.budget_year) {
+          throw new Error(`Cannot create budget period with null values: ${JSON.stringify(budgetPeriodData)}`);
+        }
+
                 const { data: newPeriod, error: createError } = await supabase
           .from('budget_periods')
-          .insert({
-            user_id: user.id,
-            budget_month: validMonth,
-            budget_year: validYear,
-            is_active: true,
-          })
+          .insert(budgetPeriodData)
           .select('id')
           .single();
 
         if (createError) {
-          console.error('Error creating budget period:', createError);
+          console.error('Error creating budget period:', {
+            createError,
+            budgetPeriodData,
+            user_id: user.id,
+            budget_month: validMonth,
+            budget_year: validYear,
+            validMonth_type: typeof validMonth,
+            validYear_type: typeof validYear,
+            errorMessage: createError.message,
+            errorCode: createError.code,
+            errorDetails: createError.details,
+            errorHint: createError.hint
+          });
           throw new Error(`Failed to create budget period: ${createError.message}`);
         }
 
