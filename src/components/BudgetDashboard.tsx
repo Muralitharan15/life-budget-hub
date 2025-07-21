@@ -805,8 +805,9 @@ const BudgetDashboard = () => {
         title: "Budget Configuration Deleted",
         description: "Budget configuration has been deleted successfully.",
       });
-    } catch (error) {
-      console.error("Error deleting budget config:", error);
+        } catch (error) {
+      console.error("Error deleting budget config:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
       toast({
         title: "Delete Failed",
         description: "Failed to delete budget configuration. Please try again.",
