@@ -78,7 +78,7 @@ export interface Transaction {
   budget_month: number;
   budget_year: number;
   type: 'expense' | 'income' | 'refund' | 'investment' | 'savings' | 'transfer';
-    category: 'need' | 'want' | 'savings' | 'investments' | 'unplanned';
+  category: 'need' | 'want' | 'savings' | 'investments' | 'unplanned';
   amount: number;
   description?: string;
   notes?: string;
@@ -98,7 +98,6 @@ export interface Transaction {
   deleted_at?: string;
 }
 
-export function useBudgetData(month: number, year: number, profileName: string) {
 export function useBudgetData(month: number, year: number, profileName: string = '') {
   const [budgetConfig, setBudgetConfig] = useState<BudgetConfig | null>(null);
   const [portfolios, setPortfolios] = useState<InvestmentPortfolio[]>([]);
@@ -110,7 +109,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
   const { user } = useAuth();
 
   const fetchBudgetData = async () => {
-        if (!user || !profileName) {
+    if (!user || !profileName) {
       setBudgetConfig(null);
       setPortfolios([]);
       setCategories([]);
@@ -124,10 +123,10 @@ export function useBudgetData(month: number, year: number, profileName: string =
       setLoading(true);
       setError(null);
 
-                                                console.log('Fetching budget data for:', { user: user.id, profileName, month, year });
+      console.log('Fetching budget data for:', { user: user.id, profileName, month, year });
       console.log('✅ Error logging system active - detailed errors will show with error IDs');
 
-            // Fetch budget config for specific profile
+      // Fetch budget config for specific profile
       // First try with profile_name column (new schema), fallback to without it (old schema)
       let budgetData = null;
       let budgetError = null;
@@ -138,7 +137,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .select('*')
           .eq('user_id', user.id)
           .eq('profile_name', profileName)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .maybeSingle();
         budgetData = data;
@@ -150,7 +149,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .from('budget_configs')
           .select('*')
           .eq('user_id', user.id)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .maybeSingle();
         budgetData = data;
@@ -162,8 +161,8 @@ export function useBudgetData(month: number, year: number, profileName: string =
         }
       }
 
-            if (budgetError && budgetError.code !== 'PGRST116') {
-                                        console.error('Budget config fetch error:', {
+      if (budgetError && budgetError.code !== 'PGRST116') {
+        console.error('Budget config fetch error:', {
           errorId: 'BUDGET_CONFIG_FETCH_001',
           source: 'useBudgetData.ts',
           timestamp: new Date().toISOString(),
@@ -180,10 +179,10 @@ export function useBudgetData(month: number, year: number, profileName: string =
         throw budgetError;
       }
 
-                  console.log('Fetched budget config:', budgetData);
+      console.log('Fetched budget config:', budgetData);
       setBudgetConfig(budgetData);
 
-            // Fetch investment portfolios for specific profile
+      // Fetch investment portfolios for specific profile
       let portfolioData = null;
       let portfolioError = null;
 
@@ -193,7 +192,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .select('*')
           .eq('user_id', user.id)
           .eq('profile_name', profileName)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .eq('is_active', true);
         portfolioData = data;
@@ -205,7 +204,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .from('investment_portfolios')
           .select('*')
           .eq('user_id', user.id)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .eq('is_active', true);
         portfolioData = data;
@@ -217,8 +216,8 @@ export function useBudgetData(month: number, year: number, profileName: string =
         }
       }
 
-                  if (portfolioError) {
-                console.error('Portfolio fetch error:', {
+      if (portfolioError) {
+        console.error('Portfolio fetch error:', {
           errorId: 'PORTFOLIO_FETCH_002',
           source: 'useBudgetData.ts',
           timestamp: new Date().toISOString(),
@@ -235,10 +234,10 @@ export function useBudgetData(month: number, year: number, profileName: string =
         throw portfolioError;
       }
 
-            console.log('Fetched portfolios:', portfolioData);
+      console.log('Fetched portfolios:', portfolioData);
       setPortfolios(portfolioData || []);
 
-            // Fetch investment categories
+      // Fetch investment categories
       let categoryData = null;
       let categoryError = null;
 
@@ -248,7 +247,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .select('*')
           .eq('user_id', user.id)
           .eq('profile_name', profileName)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .eq('is_active', true);
         categoryData = data;
@@ -260,7 +259,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
             .from('investment_categories')
             .select('*')
             .eq('user_id', user.id)
-                                .eq('budget_month', month)
+            .eq('budget_month', month)
             .eq('budget_year', year)
             .eq('is_active', true);
           categoryData = data;
@@ -276,7 +275,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         }
       }
 
-            if (categoryError) {
+      if (categoryError) {
         console.error('Category fetch error:', {
           message: categoryError.message,
           details: categoryError.details,
@@ -291,7 +290,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         setCategories(categoryData || []);
       }
 
-            // Fetch investment funds
+      // Fetch investment funds
       let fundData = null;
       let fundError = null;
 
@@ -301,7 +300,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .select('*')
           .eq('user_id', user.id)
           .eq('profile_name', profileName)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .eq('is_active', true);
         fundData = data;
@@ -313,7 +312,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
             .from('investment_funds')
             .select('*')
             .eq('user_id', user.id)
-                                .eq('budget_month', month)
+            .eq('budget_month', month)
             .eq('budget_year', year)
             .eq('is_active', true);
           fundData = data;
@@ -329,8 +328,8 @@ export function useBudgetData(month: number, year: number, profileName: string =
         }
       }
 
-            if (fundError) {
-                        console.error('Fund fetch error:', {
+      if (fundError) {
+        console.error('Fund fetch error:', {
           source: 'useBudgetData.ts',
           timestamp: new Date().toISOString(),
           message: fundError?.message || 'No message available',
@@ -346,7 +345,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         setFunds(fundData || []);
       }
 
-                  // Build nested portfolio structure
+      // Build nested portfolio structure
       const portfoliosWithCategories = (portfolioData || []).map((portfolio: InvestmentPortfolio) => {
         const portfolioCategories = (categoryData || [])
           .filter((cat: InvestmentCategory) => cat.portfolio_id === portfolio.id)
@@ -363,7 +362,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
 
       setPortfolios(portfoliosWithCategories);
 
-            // Fetch transactions for specific profile
+      // Fetch transactions for specific profile
       let transactionData = null;
       let transactionError = null;
 
@@ -373,7 +372,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .select('*')
           .eq('user_id', user.id)
           .eq('profile_name', profileName)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .eq('is_deleted', false)
           .order('transaction_date', { ascending: false });
@@ -386,7 +385,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           .from('transactions')
           .select('*')
           .eq('user_id', user.id)
-                              .eq('budget_month', month)
+          .eq('budget_month', month)
           .eq('budget_year', year)
           .eq('is_deleted', false)
           .order('transaction_date', { ascending: false });
@@ -399,7 +398,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         }
       }
 
-            if (transactionError) {
+      if (transactionError) {
         console.error('Transaction fetch error:', {
           message: transactionError.message,
           code: transactionError.code,
@@ -414,8 +413,8 @@ export function useBudgetData(month: number, year: number, profileName: string =
 
       console.log('Fetched transactions:', transactionData);
       setTransactions(transactionData || []);
-        } catch (err) {
-                        console.error('Fetch budget data error:', {
+    } catch (err) {
+      console.error('Fetch budget data error:', {
         errorId: 'FETCH_BUDGET_DATA_003',
         source: 'useBudgetData.ts',
         timestamp: new Date().toISOString(),
@@ -438,7 +437,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
     if (!user || !profileName) return;
 
     try {
-            console.log('Saving budget config:', { user: user.id, profileName, month, year, config });
+      console.log('Saving budget config:', { user: user.id, profileName, month, year, config });
 
       // First, ensure we have a budget period
       const currentDate = new Date();
@@ -491,11 +490,11 @@ export function useBudgetData(month: number, year: number, profileName: string =
         }
       }
       
-                        const budgetData = {
+      const budgetData = {
         user_id: user.id,
         profile_name: profileName,
         budget_period_id: budgetPeriodId,
-                budget_month: validMonth,
+        budget_month: validMonth,
         budget_year: validYear,
         monthly_salary: config.monthly_salary || 0,
         budget_percentage: config.budget_percentage || 100,
@@ -515,7 +514,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         .select()
         .single();
 
-            if (error) {
+      if (error) {
         console.error('Error saving budget config:', {
           errorId: 'SAVE_BUDGET_CONFIG_004',
           source: 'useBudgetData.ts',
@@ -538,7 +537,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
     }
   };
 
-    const saveInvestmentPortfolio = async (portfolio: Partial<InvestmentPortfolio>) => {
+  const saveInvestmentPortfolio = async (portfolio: Partial<InvestmentPortfolio>) => {
     if (!user || !profileName) return;
 
     try {
@@ -594,11 +593,11 @@ export function useBudgetData(month: number, year: number, profileName: string =
       }
 
       const portfolioData = {
-                ...portfolio,
+        ...portfolio,
         user_id: user.id,
         profile_name: profileName,
         budget_period_id: budgetPeriodId,
-                budget_month: validMonth,
+        budget_month: validMonth,
         budget_year: validYear,
       };
 
@@ -655,18 +654,18 @@ export function useBudgetData(month: number, year: number, profileName: string =
     }
   };
 
-      const addTransaction = async (transaction: Partial<Transaction>) => {
+  const addTransaction = async (transaction: Partial<Transaction>) => {
     if (!user || !profileName) return;
 
-        console.log('addTransaction called with:', {
+    console.log('addTransaction called with:', {
       month,
       year,
       profileName,
       user: user.id,
       transaction: transaction
-        });
+    });
 
-        // Ensure we have valid month and year values, with proper validation and fallbacks
+    // Ensure we have valid month and year values, with proper validation and fallbacks
     const currentDate = new Date();
 
     let validMonth: number;
@@ -708,10 +707,10 @@ export function useBudgetData(month: number, year: number, profileName: string =
     // Initialize budget period ID
     let budgetPeriodId = null;
 
-            try {
+    try {
       // First, ensure we have a budget period
 
-            console.log('Looking for budget period:', {
+      console.log('Looking for budget period:', {
         user_id: user.id,
         budget_month: validMonth,
         budget_year: validYear,
@@ -746,7 +745,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
       if (existingPeriod) {
         budgetPeriodId = existingPeriod.id;
         console.log('Found existing budget period:', budgetPeriodId);
-            } else {
+      } else {
         // Create new budget period
         const budgetPeriodData = {
           user_id: user.id,
@@ -762,7 +761,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           throw new Error(`Cannot create budget period with null values: ${JSON.stringify(budgetPeriodData)}`);
         }
 
-                const { data: newPeriod, error: createError } = await supabase
+        const { data: newPeriod, error: createError } = await supabase
           .from('budget_periods')
           .insert(budgetPeriodData)
           .select('id')
@@ -790,7 +789,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
           console.log('Created new budget period:', budgetPeriodId);
         } else {
           throw new Error("Budget period creation returned no data");
-                }
+        }
       }
 
       // Validate that we have a valid budget_period_id
@@ -798,7 +797,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         throw new Error("Failed to create or find budget period - cannot insert transaction");
       }
 
-            // Verify the budget period actually exists and has valid data
+      // Verify the budget period actually exists and has valid data
       const { data: periodCheck, error: checkError } = await supabase
         .from('budget_periods')
         .select('id, budget_year, budget_month, user_id, is_active')
@@ -812,7 +811,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
 
       console.log('Budget period verified:', periodCheck);
 
-            // Check if the budget period has null budget_year or budget_month (corrupted data)
+      // Check if the budget period has null budget_year or budget_month (corrupted data)
       // Also handle cases where values might be undefined, 0, or other falsy values
       const hasValidYear = periodCheck.budget_year && typeof periodCheck.budget_year === 'number' && periodCheck.budget_year > 2000;
       const hasValidMonth = periodCheck.budget_month && typeof periodCheck.budget_month === 'number' && periodCheck.budget_month >= 1 && periodCheck.budget_month <= 12;
@@ -829,7 +828,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         // Delete and recreate the corrupted budget period to ensure clean state
         console.log('Deleting corrupted budget period and recreating...');
 
-                // First, clean up any related data that might reference this corrupted budget period
+        // First, clean up any related data that might reference this corrupted budget period
         console.log('Cleaning up related data for corrupted budget period...');
 
         // Clean up any transactions that might reference this corrupted period
@@ -935,19 +934,19 @@ export function useBudgetData(month: number, year: number, profileName: string =
 
       console.log('Budget period final verification passed:', finalCheck);
 
-                        const transactionData = {
-                ...transaction,
+      const transactionData = {
+        ...transaction,
         user_id: user.id,
         profile_name: profileName,
         budget_period_id: budgetPeriodId,
-                budget_month: validMonth,
+        budget_month: validMonth,
         budget_year: validYear,
         transaction_date: transaction.transaction_date || new Date().toISOString().split('T')[0],
       };
 
       console.log('Transaction data to insert:', transactionData);
 
-            // Final validation before insert
+      // Final validation before insert
       if (!transactionData.user_id || !transactionData.budget_period_id ||
           !transactionData.budget_month || !transactionData.budget_year ||
           typeof transactionData.budget_month !== 'number' ||
@@ -974,7 +973,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         throw new Error(`Transaction has null/undefined critical fields: ${invalidFields.join(', ')}`);
       }
 
-            console.log('About to insert transaction with data:', JSON.stringify(transactionData, null, 2));
+      console.log('About to insert transaction with data:', JSON.stringify(transactionData, null, 2));
       console.log('Budget period being referenced:', {
         budgetPeriodId,
         validMonth,
@@ -998,7 +997,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         throw new Error(`Budget period still has null values: ${JSON.stringify(preInsertCheck)}`);
       }
 
-            console.log('Pre-insert budget period check passed:', preInsertCheck);
+      console.log('Pre-insert budget period check passed:', preInsertCheck);
       console.log('Inserting transaction into database...');
 
       // Insert transaction with all required data
@@ -1057,7 +1056,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
         data = retryResult.data;
         error = retryResult.error;
 
-                console.log('Retry transaction insert result:', { data, error });
+        console.log('Retry transaction insert result:', { data, error });
 
         // If still failing, try one more approach: insert without foreign key reference first
         if (error && error.code === '23502') {
@@ -1096,10 +1095,10 @@ export function useBudgetData(month: number, year: number, profileName: string =
         }
       }
 
-            if (error) throw error;
+      if (error) throw error;
       setTransactions(prev => [data, ...prev]);
       return data;
-        } catch (err) {
+    } catch (err) {
       const errorDetails = {
         errorId: 'ADD_TRANSACTION_007',
         source: 'useBudgetData.ts',
@@ -1173,9 +1172,9 @@ export function useBudgetData(month: number, year: number, profileName: string =
     try {
       // Create refund transaction
       const refundData = {
-                user_id: user.id,
+        user_id: user.id,
         profile_name: profileName,
-                budget_month: month,
+        budget_month: month,
         budget_year: year,
         type: 'refund' as const,
         category: 'need' as const, // Will be updated based on original transaction
@@ -1221,7 +1220,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
     fetchBudgetData();
   }, [user, month, year, profileName]);
 
-      const deleteBudgetConfig = async () => {
+  const deleteBudgetConfig = async () => {
     if (!user || !profileName) return;
 
     try {
@@ -1323,7 +1322,7 @@ export function useBudgetData(month: number, year: number, profileName: string =
     deleteBudgetConfig,
     deleteAllInvestmentPortfolios,
     deleteAllTransactions,
-        refetch: fetchBudgetData,
+    refetch: fetchBudgetData,
     deleteAllUserData: async () => {
       if (!user) {
         throw new Error("User authentication required");
