@@ -834,8 +834,9 @@ const BudgetDashboard = () => {
         title: "Investment Portfolios Deleted",
         description: "All investment portfolios have been deleted successfully.",
       });
-    } catch (error) {
-      console.error("Error deleting investment portfolios:", error);
+        } catch (error) {
+      console.error("Error deleting investment portfolios:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
       toast({
         title: "Delete Failed",
         description: "Failed to delete investment portfolios. Please try again.",
