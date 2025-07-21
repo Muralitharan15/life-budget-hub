@@ -1453,8 +1453,8 @@ const BudgetDashboard = () => {
         title: "Expense Added",
         description: `Added ��${amount} for ${spentFor}`,
       });
-        } catch (error) {
-      console.error("Error adding expense:", {
+                } catch (error) {
+      const errorDetails = {
         errorId: 'ADD_EXPENSE_005',
         source: 'BudgetDashboard.tsx',
         timestamp: new Date().toISOString(),
@@ -1462,9 +1462,13 @@ const BudgetDashboard = () => {
         code: error?.code || 'No code available',
         details: error?.details || 'No details available',
         hint: error?.hint || 'No hint available',
-        rawError: error,
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        stack: error instanceof Error ? error.stack : undefined,
+        errorString: String(error),
+        errorJson: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+      };
+
+      console.error("Error adding expense:", errorDetails);
+      console.error("Raw error object:", error);
             // Extract meaningful error message
       let errorMessage = "There was an error adding your expense. Please try again.";
 
