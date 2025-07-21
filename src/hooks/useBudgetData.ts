@@ -923,7 +923,33 @@ export function useBudgetData(month: number, year: number, profileName: string) 
         })}`);
       }
 
+            console.log('About to insert transaction with data:', JSON.stringify(transactionData, null, 2));
+      console.log('Budget period being referenced:', {
+        budgetPeriodId,
+        validMonth,
+        validYear,
+        profileName,
+        user_id: user.id
+      });
+
+      // Additional check: verify budget period still exists and is valid right before insert
+      const { data: preInsertCheck, error: preInsertError } = await supabase
+        .from('budget_periods')
+        .select('id, budget_year, budget_month, user_id')
+        .eq('id', budgetPeriodId)
+        .single();
+
+      if (preInsertError || !preInsertCheck) {
+        throw new Error(`Budget period disappeared before transaction insert: ${preInsertError?.message}`);
+      }
+
+      if (!preInsertCheck.budget_year || !preInsertCheck.budget_month) {
+        throw new Error(`Budget period still has null values: ${JSON.stringify(preInsertCheck)}`);
+      }
+
+      console.log('Pre-insert budget period check passed:', preInsertCheck);
       console.log('Inserting transaction into database...');
+
       const { data, error } = await supabase
         .from('transactions')
         .insert(transactionData)
