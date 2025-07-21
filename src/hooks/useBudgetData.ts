@@ -99,6 +99,7 @@ export interface Transaction {
 }
 
 export function useBudgetData(month: number, year: number, profileName: string) {
+export function useBudgetData(month: number, year: number, profileName: string = '') {
   const [budgetConfig, setBudgetConfig] = useState<BudgetConfig | null>(null);
   const [portfolios, setPortfolios] = useState<InvestmentPortfolio[]>([]);
   const [categories, setCategories] = useState<InvestmentCategory[]>([]);
