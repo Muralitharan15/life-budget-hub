@@ -1056,7 +1056,43 @@ export function useBudgetData(month: number, year: number, profileName: string) 
         data = retryResult.data;
         error = retryResult.error;
 
-        console.log('Retry transaction insert result:', { data, error });
+                console.log('Retry transaction insert result:', { data, error });
+
+        // If still failing, try one more approach: insert without foreign key reference first
+        if (error && error.code === '23502') {
+          console.warn('Still getting constraint error, trying alternative approach...');
+
+          // Create transaction data without budget_period_id temporarily
+          const fallbackTransactionData = {
+            ...transactionData,
+            budget_period_id: null // Temporarily remove the problematic foreign key
+          };
+
+          // Try to insert without the foreign key
+          const fallbackResult = await supabase
+            .from('transactions')
+            .insert(fallbackTransactionData)
+            .select()
+            .single();
+
+          if (fallbackResult.data && !fallbackResult.error) {
+            // If successful, immediately update with the correct budget_period_id
+            const updateResult = await supabase
+              .from('transactions')
+              .update({ budget_period_id: newPeriod.id })
+              .eq('id', fallbackResult.data.id)
+              .select()
+              .single();
+
+            data = updateResult.data;
+            error = updateResult.error;
+
+            console.log('Fallback approach result:', { data, error });
+          } else {
+            data = fallbackResult.data;
+            error = fallbackResult.error;
+          }
+        }
       }
 
             if (error) throw error;
