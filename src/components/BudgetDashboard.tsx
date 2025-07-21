@@ -863,8 +863,9 @@ const BudgetDashboard = () => {
         title: "All Transactions Deleted",
         description: "All transactions have been deleted successfully.",
       });
-    } catch (error) {
-      console.error("Error deleting transactions:", error);
+        } catch (error) {
+      console.error("Error deleting transactions:", error instanceof Error ? error.message : String(error));
+      console.error("Error object:", error);
       toast({
         title: "Delete Failed",
         description: "Failed to delete transactions. Please try again.",
