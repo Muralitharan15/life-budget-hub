@@ -946,15 +946,31 @@ export function useBudgetData(month: number, year: number, profileName: string) 
 
       console.log('Transaction data to insert:', transactionData);
 
-      // Final validation before insert
+            // Final validation before insert
       if (!transactionData.user_id || !transactionData.budget_period_id ||
-          !transactionData.budget_month || !transactionData.budget_year) {
+          !transactionData.budget_month || !transactionData.budget_year ||
+          typeof transactionData.budget_month !== 'number' ||
+          typeof transactionData.budget_year !== 'number' ||
+          transactionData.budget_month < 1 || transactionData.budget_month > 12 ||
+          transactionData.budget_year < 2020) {
         throw new Error(`Invalid transaction data: ${JSON.stringify({
           user_id: transactionData.user_id,
           budget_period_id: transactionData.budget_period_id,
           budget_month: transactionData.budget_month,
-          budget_year: transactionData.budget_year
+          budget_year: transactionData.budget_year,
+          month_type: typeof transactionData.budget_month,
+          year_type: typeof transactionData.budget_year
         })}`);
+      }
+
+      // Also validate that the transaction doesn't have any undefined/null critical fields
+      const criticalFields = ['type', 'category', 'amount', 'user_id', 'budget_period_id', 'budget_month', 'budget_year'];
+      const invalidFields = criticalFields.filter(field =>
+        transactionData[field] === null || transactionData[field] === undefined
+      );
+
+      if (invalidFields.length > 0) {
+        throw new Error(`Transaction has null/undefined critical fields: ${invalidFields.join(', ')}`);
       }
 
             console.log('About to insert transaction with data:', JSON.stringify(transactionData, null, 2));
